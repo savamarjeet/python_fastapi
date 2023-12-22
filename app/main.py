@@ -1,22 +1,15 @@
 from app import schemas
 from app import models
 from app.models import User
-from app.database import Base, engine, SessionLocal
+from app.database import Base, engine
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from . import app
 from app.utils import create_access_token, create_refresh_token, verify_password, get_hashed_password
 from app.auth_bearer import JWTBearer
-from app.utils import get_pagination_params
+from app.utils import get_pagination_params, get_db_session
 
 Base.metadata.create_all(engine)
-
-def get_db_session():
-    session = SessionLocal()
-    try:
-        yield session
-    finally:
-        session.close()
 
 @app.post("/register")
 def register_user(user: schemas.UserCreate, db: Session = Depends(get_db_session)):

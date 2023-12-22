@@ -14,6 +14,7 @@ This repository contains a FastAPI application with API documentation powered by
 2. **Create a virtual environment (using Python 3.11 Version):**
    ```bash
    python3.11 -m virtualenv venv
+   source venv/Scripts/activate
    ```
 3. **Install Dependencies:**
    ```bash

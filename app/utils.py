@@ -4,8 +4,21 @@ from typing import Union, Any
 from jose import jwt
 from .const import ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_MINUTES, ALGORITHM, JWT_SECRET_KEY, JWT_REFRESH_SECRET_KEY
 from fastapi import Query
+from app.database import SessionLocal
+from app import models
 
 password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def get_db_session():
+    session = SessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
+
+def get_token_from_db(user_id: int):
+    session = SessionLocal()
+    return session.query(models.TokenTable).filter(models.TokenTable.user_id == user_id).first()
 
 def get_hashed_password(password: str) -> str:
     return password_context.hash(password)
