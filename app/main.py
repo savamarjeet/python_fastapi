@@ -9,8 +9,10 @@ from app.utils import create_access_token, create_refresh_token, verify_password
 from app.auth_bearer import JWTBearer
 from app.utils import get_pagination_params, get_db_session
 
+# Create Database tables
 Base.metadata.create_all(engine)
 
+# Register a new user
 @app.post("/register")
 def register_user(user: schemas.UserCreate, db: Session = Depends(get_db_session)):
     existing_user = db.query(models.User).filter_by(email=user.email).first()
@@ -28,6 +30,7 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db_session
     return {"message": "User created successfully"}
 
 
+# Login endpoint
 @app.post('/login', response_model=schemas.TokenSchema)
 def login(request: schemas.Requestdetails, db: Session = Depends(get_db_session)):
     user = db.query(User).filter(User.email == request.email, User.is_active == True).first()
@@ -39,10 +42,12 @@ def login(request: schemas.Requestdetails, db: Session = Depends(get_db_session)
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect password"
         )
-    
+
+    # Generate access and refresh tokens
     access = create_access_token(user.id)
     refresh = create_refresh_token(user.id)
 
+    # Store tokens in the database
     token_db = models.TokenTable(user_id=user.id,  access_token=access,  refresh_token=refresh, status=True)
     db.add(token_db)
     db.commit()
@@ -53,23 +58,26 @@ def login(request: schemas.Requestdetails, db: Session = Depends(get_db_session)
     }
 
 
+# Logout endpoint
 @app.post('/logout')
-def logout(token_user_id = Depends(JWTBearer()), db: Session = Depends(get_db_session)):
-    user_id = token_user_id
+def logout(user_id = Depends(JWTBearer()), db: Session = Depends(get_db_session)):
     db.query(models.TokenTable).filter(models.TokenTable.user_id == user_id).delete()
     db.commit()
     return {"message":"Logout Successfully"} 
 
 
+# List users endpoint
 @app.get('/users', response_model = list[schemas.UserBase])
 def list_users(token_user_id = Depends(JWTBearer()), db: Session = Depends(get_db_session), pagination: dict = Depends(get_pagination_params)):
     start = pagination["skip"]
     end = start + pagination["limit"]
 
+    # Query active users based on pagination
     user = db.query(models.User).filter(models.User.is_active == True)
     return user[start:end]
 
 
+# Get user by ID endpoint
 def get_user(user_id: int, db: Session = Depends(get_db_session)):
     user = db.query(models.User).filter(models.User.id == user_id, models.User.is_active == True).first()
     if user is None:
@@ -77,11 +85,13 @@ def get_user(user_id: int, db: Session = Depends(get_db_session)):
     return user
 
 
+# Get user details by ID endpoint
 @app.get('/users/{user_id}', response_model = schemas.UserDetail)
 def get_user(user_id: int, token_user_id = Depends(JWTBearer()), user: models.User = Depends(get_user)):
     return user
 
 
+# Create a new post endpoint
 @app.post('/posts')
 def create_post(post: schemas.Post, logged_user_id = Depends(JWTBearer()), db: Session = Depends(get_db_session)):
     new_post = models.Post(**post.__dict__, author_id=logged_user_id)
@@ -92,17 +102,21 @@ def create_post(post: schemas.Post, logged_user_id = Depends(JWTBearer()), db: S
     return {"message": "Post created successfully"}
 
 
+# List posts endpoint
 @app.get('/posts', response_model = list[schemas.DetailPost])
 def list_posts(logged_user_id = Depends(JWTBearer()), db: Session = Depends(get_db_session), pagination: dict = Depends(get_pagination_params)):
     start = pagination["skip"]
     end = start + pagination["limit"]
 
+    # Query active posts based on pagination
     db_post = db.query(models.Post).filter(models.Post.is_active == True)
     return db_post[start:end]
 
 
+# Get post by ID endpoint
 @app.get('/posts/{post_id}', response_model = schemas.DetailPost)
 def posts(post_id: int, logged_user_id = Depends(JWTBearer()), db: Session = Depends(get_db_session)):
+    # Query post by ID and check if it's active
     db_post = db.query(models.Post).filter(models.Post.id == post_id, models.Post.is_active == True).first()
     # check if the post exists
     if not db_post:
@@ -110,6 +124,7 @@ def posts(post_id: int, logged_user_id = Depends(JWTBearer()), db: Session = Dep
     return db_post
 
 
+# Delete post by ID endpoint
 @app.delete("/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(post_id: int, db: Session = Depends(get_db_session)):
     db_post = db.query(models.Post).filter(models.Post.id == post_id).first()

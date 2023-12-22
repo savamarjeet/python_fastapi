@@ -4,6 +4,8 @@ from app.database import Base
 import datetime
 
 class User(Base):
+    """User model representing user information."""
+
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), nullable=False)
@@ -19,6 +21,8 @@ class User(Base):
 
 
 class TokenTable(Base):
+    """User JWT Token reside here"""
+
     __tablename__ = "token"
     user_id = Column(Integer)
     access_token = Column(String(450), primary_key=True)
@@ -28,6 +32,8 @@ class TokenTable(Base):
 
 
 class Post(Base):
+    """Post model representing user posts"""
+
     __tablename__ = "posts"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(100), index=True)
