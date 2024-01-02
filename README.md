@@ -22,7 +22,7 @@ This repository contains a FastAPI application with API documentation powered by
    ```
 4. **Run the FastAPI Application:**
    ```bash
-   python main.py
+   uvicorn app:app --reload 
    ```
 5. **Access API Documentation:**
     - Swagger UI: http://localhost:8000/api/docs  
